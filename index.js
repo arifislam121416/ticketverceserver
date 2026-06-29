@@ -9,7 +9,7 @@ const port = process.env.PORT || 8000;
 
 app.use(
   cors({
-    origin: ["http://localhost:3000"],
+    origin: ["https://ticket-verse-beta.vercel.app"],
     credentials: true,
   })
 );
@@ -26,12 +26,23 @@ const client = new MongoClient(process.env.MONGODB_URI, {
 
 async function run() {
   try {
-    await client.connect();
+   let db;
 
-    const db = client.db("TricketVerce");
+async function connectDB() {
+  if (!db) {
+    await client.connect();
+    db = client.db("TricketVerce");
+  }
+
+  return db;
+}
+
+const db = await connectDB();
+
+  
 
     const ticketCollection = db.collection("tricket");
-    const ticketCollectionPayment = db.collection("tricketpayment");
+    // const ticketCollectionPayment = db.collection("tricketpayment");
     const bookingCollection = db.collection("bookings");
     const userCollection = db.collection("users");
 
@@ -93,11 +104,11 @@ async function run() {
       _id: new ObjectId(id),
     });
 
-    if (!result) {
-      return res.status(404).send({
-        message: "Ticket Not Found",
-      });
-    }
+   if (!ObjectId.isValid(id)) {
+    return res.status(400).send({
+        message:"Invalid ID"
+    });
+}
 
     res.send(result);
   } catch (error) {
@@ -151,10 +162,15 @@ async function run() {
     app.delete("/tricket/:id", async (req, res) => {
       const id = req.params.id;
 
-      const result = await ticketCollection.deleteOne({
-        _id: new ObjectId(id),
-      });
+ if (!ObjectId.isValid(id)) {
+    return res.status(400).send({
+        message:"Invalid ID"
+    });
+}
 
+const result = await ticketCollection.findOne({
+    _id:new ObjectId(id)
+});
       res.send(result);
     });
 
@@ -179,7 +195,11 @@ async function run() {
 
     app.get("/bookings", async (req, res) => {
       const email = req.query.email;
-
+if (!email) {
+    return res.status(400).send({
+        message:"Email required"
+    });
+}
       const result = await bookingCollection
         .find({
           userEmail: email,
@@ -201,15 +221,15 @@ async function run() {
       });
 
       if (exists) {
-        return res.send({
-          message: "User already exists",
-        });
+       return res.status(409).send({
+    message:"User already exists"
+});
       }
 
-      const result = await userCollection.insertOne({
-        ...user,
-        role: "user",
-      });
+     const result = await userCollection.insertOne({
+   ...user,
+   role:user.role || "user"
+});
 
       res.send(result);
     });
