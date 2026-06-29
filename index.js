@@ -26,25 +26,21 @@ const client = new MongoClient(process.env.MONGODB_URI, {
 
 async function run() {
   try {
-   let db;
+  let db;
 
 async function connectDB() {
   if (!db) {
     await client.connect();
     db = client.db("TricketVerce");
   }
-
   return db;
 }
 
-const db = await connectDB();
+db = await connectDB();
 
-  
-
-    const ticketCollection = db.collection("tricket");
-    // const ticketCollectionPayment = db.collection("tricketpayment");
-    const bookingCollection = db.collection("bookings");
-    const userCollection = db.collection("users");
+const ticketCollection = db.collection("tricket");
+const bookingCollection = db.collection("bookings");
+const userCollection = db.collection("users");
 
     console.log("MongoDB Connected Successfully");
 
